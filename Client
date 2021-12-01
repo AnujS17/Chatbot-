@@ -1,44 +1,41 @@
-# -*- coding: utf-8 -*-
-import sys
-import json
+// Python program to implement client side of chat room.
 import socket
-from PyQt5 import QtWidgets
-from socket_chatbot import Ui_MainWindow
+import select
+import sys
 
-# HOST & PORT
-with open('HOST_PORT.json', 'r', encoding='utf-8') as f:
-    HOST_PORT = json.load(f)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+if len(sys.argv) != 3:
+    print("Correct usage: script, IP address, port number")
+    exit()
+IP_address = str(sys.argv[1])
+Port = int(sys.argv[2])
+server.connect((IP_address, Port))
 
+while True:
 
-class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
-        super(MainWindow, self).__init__()
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+    // maintains a list of possible input streams
+    sockets_list = [socket.socket(), server]
 
-        self.ui.textBrowser.append('<font color="#FF0000">Server: Hello! I will repeat what you said!</font>')
-        self.HOST = HOST_PORT['HOST']
-        self.PORT = int(HOST_PORT['PORT'])
+    // There are two possible input situations. Either the
+    user wants to give manual input to send to other people,
+    or the server is sending a message to be printed on the
+    screen. Select returns from sockets_list, the stream that
+    is reader for input. So for example, if the server wants
+    to send a message, then the if condition will hold true
+    below.If the user wants to send a message, the else
+    condition will evaluate as true
+    
+    
+    read_sockets, write_socket, error_socket = select.select(sockets_list, [], [])
 
-        self.ui.pushButton.clicked.connect(self.buttonEvent)
-
-    def buttonEvent(self):
-        text = self.ui.textEdit.toPlainText()
-        self.ui.textEdit.clear()
-        self.ui.textBrowser.append('User: '+text)
-
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client.connect((self.HOST, self.PORT))
-        self.client.sendall(text.encode())
-
-        # Server message
-        serverMessage = str(self.client.recv(1024), encoding='utf-8')
-        self.ui.textBrowser.append('<font color="#FF0000">Server: '+serverMessage+'</font>')
-        self.client.close()
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication([])
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    for socks in read_sockets:
+        if socks == server:
+            message = socks.recv(2048)
+            print(message)
+        else:
+            message = sys.stdin.readline()
+            server.send(message.encode())
+            sys.stdout.write("<You>")
+            sys.stdout.write(message)
+            sys.stdout.flush()
+server.close()
