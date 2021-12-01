@@ -1,0 +1,20 @@
+pip install google-api-python-client
+
+//Enter your api key
+api_key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+from apiclient.discovery import build
+
+//enter the cs provided in your google custom search dashboard
+resource = build("customsearch", 'v1', developerKey=api_key).cse()
+result = resource.list(q='python', cx='009557628044748784875:5lejfe73wrw').execute()
+result['items'][0]
+
+//selecting the item and link to display in results
+for item in result['items']:
+    print(item['title'], item['link'])
+    
+// image search
+result = resource.list(q='python', cx='009557628044748784875:5lejfe73wrw', searchType='image').execute()
+for item in result['items']:
+print(item['title'], item['link'])
+
